@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface EmailAnalyzerProps {
@@ -31,15 +30,22 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     setIsLoading(true);
     
     try {
-      console.log('Analyzing email content...');
+      console.log('Analyzing email with Flask backend...');
       
-      const { data, error } = await supabase.functions.invoke('analyze-email', {
-        body: { email }
+      const response = await fetch("http://127.0.0.1:5000/analyze-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) {
-        throw new Error(`Analysis failed: ${error.message}`);
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log('Analysis response:', data);
       
       onResult({
         ...data,
@@ -56,7 +62,7 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
       
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze email. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze email. Please ensure the backend is running.",
         variant: "destructive",
       });
     } finally {

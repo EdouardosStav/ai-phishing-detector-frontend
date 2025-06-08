@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Download, Shield, AlertTriangle, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface ResultsPanelProps {
@@ -60,36 +59,31 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
     setIsDownloading(true);
     
     try {
-      const requestBody = result.type === 'url' 
-        ? { 
-            url: result.input,
-            risk_score: result.risk_score,
-            risk_level: result.risk_level,
-            indicators: result.indicators,
-            explanation: result.explanation
-          }
-        : { 
-            email: result.input,
-            risk_score: result.risk_score,
-            risk_level: result.risk_level,
-            indicators: result.indicators,
-            explanation: result.explanation
-          };
+      const endpoint = result.type === 'email' ? '/generate-email-report' : '/generate-url-report';
+      const requestBody = result.type === 'email' 
+        ? { email: result.input }
+        : { url: result.input };
 
-      const { data, error } = await supabase.functions.invoke('generate-report', {
-        body: requestBody
+      console.log(`Downloading ${result.type} report from Flask backend...`);
+      
+      const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       });
 
-      if (error) {
-        throw new Error(`Download failed: ${error.message}`);
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.statusText}`);
       }
 
-      // Create blob and download
-      const blob = new Blob([data], { type: 'text/plain' });
+      // Handle PDF download
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `phishing-analysis-report-${result.type}.txt`);
+      link.setAttribute('download', `phishing-analysis-report-${result.type}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -103,7 +97,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: error instanceof Error ? error.message : "Failed to download report. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to download report. Please ensure the backend is running.",
         variant: "destructive",
       });
     } finally {

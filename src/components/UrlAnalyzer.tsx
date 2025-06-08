@@ -3,9 +3,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Globe, AlertTriangle } from "lucide-react";
+import { Loader2, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface UrlAnalyzerProps {
@@ -18,27 +17,6 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
   const [url, setUrl] = useState("");
   const { toast } = useToast();
 
-  const isValidUrl = (urlString: string) => {
-    try {
-      const urlObj = new URL(urlString);
-      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
-
-  const normalizeUrl = (urlString: string) => {
-    // Remove any leading/trailing whitespace
-    let cleanUrl = urlString.trim();
-    
-    // If it doesn't start with http:// or https://, add https://
-    if (!cleanUrl.match(/^https?:\/\//)) {
-      cleanUrl = 'https://' + cleanUrl;
-    }
-    
-    return cleanUrl;
-  };
-
   const analyzeUrl = async () => {
     if (!url.trim()) {
       toast({
@@ -49,12 +27,13 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       return;
     }
 
-    const normalizedUrl = normalizeUrl(url);
-
-    if (!isValidUrl(normalizedUrl)) {
+    // Basic URL validation
+    try {
+      new URL(url);
+    } catch {
       toast({
         title: "Invalid URL",
-        description: "Please enter a valid URL (e.g., example.com or https://example.com)",
+        description: "Please enter a valid URL (e.g., https://example.com)",
         variant: "destructive",
       });
       return;
@@ -63,20 +42,27 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     setIsLoading(true);
     
     try {
-      console.log('Analyzing URL:', normalizedUrl);
+      console.log('Analyzing URL with Flask backend:', url);
       
-      const { data, error } = await supabase.functions.invoke('analyze-url', {
-        body: { url: normalizedUrl }
+      const response = await fetch("http://127.0.0.1:5000/analyze-url", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
       });
 
-      if (error) {
-        throw new Error(`Analysis failed: ${error.message}`);
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log('Analysis response:', data);
       
       onResult({
         ...data,
         type: 'url',
-        input: normalizedUrl,
+        input: url,
       });
 
       toast({
@@ -88,23 +74,13 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze URL. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to analyze URL. Please ensure the backend is running.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoading) {
-      analyzeUrl();
-    }
-  };
-
-  const displayUrl = url || "";
-  const normalizedUrl = url ? normalizeUrl(url) : "";
-  const isUrlValid = !url || isValidUrl(normalizedUrl);
 
   return (
     <div className="space-y-4">
@@ -115,30 +91,21 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
         </Label>
         <Input
           id="url"
-          type="text"
-          placeholder="example.com or https://example.com"
-          value={displayUrl}
+          type="url"
+          placeholder="https://example.com"
+          value={url}
           onChange={(e) => setUrl(e.target.value)}
-          onKeyPress={handleKeyPress}
           className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
           disabled={isLoading}
         />
-        {url && !isUrlValid && (
-          <div className="flex items-center text-amber-400 text-sm">
-            <AlertTriangle className="h-4 w-4 mr-1" />
-            Please enter a valid URL
-          </div>
-        )}
-        {url && isUrlValid && normalizedUrl !== url && (
-          <div className="text-sm text-slate-400">
-            Will analyze: {normalizedUrl}
-          </div>
-        )}
+        <div className="text-sm text-slate-400">
+          Enter the complete URL including http:// or https://
+        </div>
       </div>
 
       <Button 
         onClick={analyzeUrl}
-        disabled={isLoading || !url.trim() || !isUrlValid}
+        disabled={isLoading || !url.trim()}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         {isLoading ? (
