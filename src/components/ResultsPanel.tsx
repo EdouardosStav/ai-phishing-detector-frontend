@@ -59,32 +59,26 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
     setIsDownloading(true);
     
     try {
-      // Use the correct endpoints from your Flask backend
-      const endpoint = result.type === 'email' ? '/generate-email-report' : '/generate-report';
-      const requestBody = result.type === 'email' 
-        ? { email: result.input }
-        : { url: result.input };
-
-      console.log(`Downloading ${result.type} report from Flask backend...`);
+      console.log(`Downloading ${result.type} report from Supabase Edge Function...`);
       
-      const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+      const response = await fetch("/api/generate-report", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify(result.type === 'email' ? { email: result.input } : { url: result.input }),
       });
 
       if (!response.ok) {
         throw new Error(`Download failed: ${response.statusText}`);
       }
 
-      // Handle PDF download
+      // Handle file download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `phishing-analysis-report-${result.type}.pdf`);
+      link.setAttribute('download', `phishing-analysis-report-${result.type}.txt`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -98,7 +92,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
       console.error('Download error:', error);
       toast({
         title: "Download Failed",
-        description: error instanceof Error ? error.message : "Failed to download report. Please ensure the backend is running.",
+        description: error instanceof Error ? error.message : "Failed to download report. Please try again.",
         variant: "destructive",
       });
     } finally {

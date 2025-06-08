@@ -30,19 +30,25 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     setIsLoading(true);
     
     try {
-      console.log('Analyzing email with Flask backend...');
+      console.log('Analyzing email with Supabase Edge Function...');
       
-      // Your backend doesn't have /analyze-email, so we'll create a mock analysis
-      // and go directly to generating the report which contains the analysis
-      const mockResult = {
-        risk_score: 7,
-        risk_level: 'high',
-        indicators: ['Suspicious sender', 'Urgent language', 'Unknown links'],
-        explanation: 'This email contains several phishing indicators including suspicious sender patterns and urgent language designed to create pressure.'
-      };
+      const response = await fetch("/api/analyze-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Analysis response:', data);
       
       onResult({
-        ...mockResult,
+        ...data,
         type: 'email',
         input: email,
       });
@@ -54,11 +60,9 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     } catch (error) {
       console.error('Analysis error:', error);
       
-      let errorMessage = "Failed to analyze email. Please ensure the Flask backend is running on port 5000.";
+      let errorMessage = "Failed to analyze email. Please try again.";
       
-      if (error instanceof TypeError && error.message === "Failed to fetch") {
-        errorMessage = "Cannot connect to Flask backend. Please ensure it's running at http://127.0.0.1:5000";
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         errorMessage = error.message;
       }
       
