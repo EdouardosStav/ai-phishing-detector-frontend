@@ -63,12 +63,39 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       const data = await response.json();
       console.log('Analysis response:', data);
       
+      // Process indicators to extract only meaningful values
+      const meaningfulIndicators: string[] = [];
+      
+      if (data.indicators && typeof data.indicators === 'object') {
+        Object.entries(data.indicators).forEach(([key, value]) => {
+          if (value === true) {
+            // Convert camelCase/snake_case to readable format
+            const readableKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toLowerCase();
+            meaningfulIndicators.push(`Detected: ${readableKey}`);
+          } else if (Array.isArray(value) && value.length > 0) {
+            // Handle arrays like suspicious_keywords
+            const readableKey = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').toLowerCase();
+            meaningfulIndicators.push(`${readableKey}: ${value.join(', ')}`);
+          }
+        });
+      }
+      
+      // Create a better explanation
+      const riskLevelText = data.risk_level.toLowerCase();
+      let explanation = `This URL has been analyzed and shows ${riskLevelText} risk indicators with a score of ${data.score}/10.`;
+      
+      if (meaningfulIndicators.length > 0) {
+        explanation += ` The following security concerns were identified: ${meaningfulIndicators.join(', ')}.`;
+      } else {
+        explanation += ` No significant security concerns were detected.`;
+      }
+      
       // Map Flask backend response to frontend expected format
       onResult({
         risk_score: data.score,
         risk_level: data.risk_level,
-        indicators: Array.isArray(data.indicators) ? data.indicators : Object.values(data.indicators || {}),
-        explanation: `This URL shows ${data.risk_level} risk indicators. The analysis detected ${data.score}/10 risk score with the following indicators: ${Array.isArray(data.indicators) ? data.indicators.join(', ') : Object.values(data.indicators || {}).join(', ')}.`,
+        indicators: meaningfulIndicators,
+        explanation: explanation,
         type: 'url',
         input: url,
       });
