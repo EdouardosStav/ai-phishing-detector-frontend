@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Globe, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface UrlAnalyzerProps {
@@ -64,19 +65,13 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     try {
       console.log('Analyzing URL:', normalizedUrl);
       
-      const response = await fetch('http://127.0.0.1:5000/analyze-url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: normalizedUrl }),
+      const { data, error } = await supabase.functions.invoke('analyze-url', {
+        body: { url: normalizedUrl }
       });
 
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+      if (error) {
+        throw new Error(`Analysis failed: ${error.message}`);
       }
-
-      const data = await response.json();
       
       onResult({
         ...data,
@@ -91,19 +86,11 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     } catch (error) {
       console.error('Analysis error:', error);
       
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast({
-          title: "Backend Connection Failed",
-          description: "Cannot connect to the analysis server. Please ensure your Flask backend is running on http://127.0.0.1:5000",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Analysis Failed",
-          description: error instanceof Error ? error.message : "Failed to analyze URL. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze URL. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

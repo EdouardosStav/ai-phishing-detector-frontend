@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface EmailAnalyzerProps {
@@ -32,19 +33,13 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     try {
       console.log('Analyzing email content...');
       
-      const response = await fetch('http://127.0.0.1:5000/analyze-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+      const { data, error } = await supabase.functions.invoke('analyze-email', {
+        body: { email }
       });
 
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+      if (error) {
+        throw new Error(`Analysis failed: ${error.message}`);
       }
-
-      const data = await response.json();
       
       onResult({
         ...data,
@@ -59,19 +54,11 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     } catch (error) {
       console.error('Analysis error:', error);
       
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        toast({
-          title: "Backend Connection Failed",
-          description: "Cannot connect to the analysis server. Please ensure your Flask backend is running on http://127.0.0.1:5000",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Analysis Failed",
-          description: error instanceof Error ? error.message : "Failed to analyze email. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Analysis Failed",
+        description: error instanceof Error ? error.message : "Failed to analyze email. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }

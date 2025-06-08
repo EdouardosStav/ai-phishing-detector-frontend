@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Download, Shield, AlertTriangle, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import { AnalysisResult } from "./PhishingDetector";
 
 interface ResultsPanelProps {
@@ -59,28 +60,36 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
     setIsDownloading(true);
     
     try {
-      const endpoint = result.type === 'url' ? '/generate-report' : '/generate-email-report';
-      const body = result.type === 'url' 
-        ? { url: result.input }
-        : { email: result.input };
+      const requestBody = result.type === 'url' 
+        ? { 
+            url: result.input,
+            risk_score: result.risk_score,
+            risk_level: result.risk_level,
+            indicators: result.indicators,
+            explanation: result.explanation
+          }
+        : { 
+            email: result.input,
+            risk_score: result.risk_score,
+            risk_level: result.risk_level,
+            indicators: result.indicators,
+            explanation: result.explanation
+          };
 
-      const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
+      const { data, error } = await supabase.functions.invoke('generate-report', {
+        body: requestBody
       });
 
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.statusText}`);
+      if (error) {
+        throw new Error(`Download failed: ${error.message}`);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      // Create blob and download
+      const blob = new Blob([data], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `report_${result.type}.pdf`);
+      link.setAttribute('download', `phishing-analysis-report-${result.type}.txt`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
@@ -181,7 +190,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
             ) : (
               <>
                 <Download className="mr-2 h-4 w-4" />
-                Download PDF Report
+                Download Analysis Report
               </>
             )}
           </Button>
