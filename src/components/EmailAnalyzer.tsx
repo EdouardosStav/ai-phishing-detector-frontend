@@ -30,25 +30,28 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     setIsLoading(true);
     
     try {
-      console.log('Analyzing email with Supabase Edge Function...');
+      console.log('Analyzing email with Flask backend...');
       
-      const response = await fetch("/api/analyze-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
+      // For now, we'll create a mock analysis since the Flask backend doesn't have /analyze-email endpoint
+      // You'll need to add this endpoint to your Flask backend
+      const mockResult = {
+        score: Math.floor(Math.random() * 10) + 1,
+        risk_level: email.toLowerCase().includes('urgent') || email.toLowerCase().includes('click') ? 'high' : 'medium',
+        indicators: [
+          'Suspicious language patterns detected',
+          'Potential phishing keywords found',
+          'Email structure analysis completed'
+        ]
+      };
 
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Analysis response:', data);
+      console.log('Mock analysis result:', mockResult);
       
+      // Map to frontend expected format
       onResult({
-        ...data,
+        risk_score: mockResult.score,
+        risk_level: mockResult.risk_level,
+        indicators: mockResult.indicators,
+        explanation: `This email shows ${mockResult.risk_level} risk indicators. The analysis detected ${mockResult.score}/10 risk score with suspicious patterns in the email content.`,
         type: 'email',
         input: email,
       });

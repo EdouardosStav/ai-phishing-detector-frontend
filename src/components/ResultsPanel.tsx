@@ -59,14 +59,22 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
     setIsDownloading(true);
     
     try {
-      console.log(`Downloading ${result.type} report from Supabase Edge Function...`);
+      console.log(`Downloading ${result.type} report from Flask backend...`);
       
-      const response = await fetch("/api/generate-report", {
+      const endpoint = result.type === 'email' ? 
+        'http://127.0.0.1:5000/generate-email-report' : 
+        'http://127.0.0.1:5000/generate-report';
+      
+      const body = result.type === 'email' ? 
+        { email: result.input } : 
+        { url: result.input };
+
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(result.type === 'email' ? { email: result.input } : { url: result.input }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -78,7 +86,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `phishing-analysis-report-${result.type}.txt`);
+      link.setAttribute('download', `phishing-analysis-report-${result.type}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);

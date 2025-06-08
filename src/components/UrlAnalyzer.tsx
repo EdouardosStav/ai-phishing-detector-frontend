@@ -42,9 +42,9 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     setIsLoading(true);
     
     try {
-      console.log('Analyzing URL with Supabase Edge Function:', url);
+      console.log('Analyzing URL with Flask backend:', url);
       
-      const response = await fetch("/api/analyze-url", {
+      const response = await fetch("http://127.0.0.1:5000/analyze-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,8 +63,12 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       const data = await response.json();
       console.log('Analysis response:', data);
       
+      // Map Flask backend response to frontend expected format
       onResult({
-        ...data,
+        risk_score: data.score,
+        risk_level: data.risk_level,
+        indicators: Array.isArray(data.indicators) ? data.indicators : Object.values(data.indicators || {}),
+        explanation: `This URL shows ${data.risk_level} risk indicators. The analysis detected ${data.score}/10 risk score with the following indicators: ${Array.isArray(data.indicators) ? data.indicators.join(', ') : Object.values(data.indicators || {}).join(', ')}.`,
         type: 'url',
         input: url,
       });
