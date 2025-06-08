@@ -34,26 +34,35 @@ const PhishingDetector = () => {
         // Ensure indicators is properly formatted as an array of strings
         let formattedIndicators: string[] = [];
         
-        if (analysisResult.indicators) {
-          if (Array.isArray(analysisResult.indicators)) {
-            formattedIndicators = analysisResult.indicators.map(indicator => 
-              typeof indicator === 'string' ? indicator : String(indicator)
-            );
-          } else {
-            // Handle case where indicators might be a string instead of array
-            const indicatorsValue = analysisResult.indicators as unknown;
-            if (typeof indicatorsValue === 'string') {
-              try {
-                formattedIndicators = JSON.parse(indicatorsValue);
-              } catch {
-                // If JSON parsing fails, split by common delimiters
-                formattedIndicators = indicatorsValue.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
-              }
+        // Handle different possible formats from the backend
+        const indicatorsRaw = analysisResult.indicators as any; // Use 'any' to bypass strict typing for backend data
+        
+        if (Array.isArray(indicatorsRaw)) {
+          // If it's already an array, ensure all elements are strings
+          formattedIndicators = indicatorsRaw.map(indicator => 
+            typeof indicator === 'string' ? indicator : String(indicator)
+          );
+        } else if (typeof indicatorsRaw === 'string') {
+          // If it's a string, try to parse it as JSON or split by delimiters
+          try {
+            const parsed = JSON.parse(indicatorsRaw);
+            if (Array.isArray(parsed)) {
+              formattedIndicators = parsed.map(item => String(item));
+            } else {
+              formattedIndicators = [String(parsed)];
             }
+          } catch {
+            // If JSON parsing fails, split by common delimiters
+            formattedIndicators = indicatorsRaw.split(/[,;|]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0);
           }
+        } else if (indicatorsRaw && typeof indicatorsRaw === 'object') {
+          // If it's an object (like the backend response), extract the values
+          const values = Object.values(indicatorsRaw);
+          formattedIndicators = values.filter(value => value !== null && value !== undefined).map(value => String(value));
         }
 
-        console.log('Saving report with formatted indicators:', formattedIndicators);
+        console.log('Original indicators:', indicatorsRaw);
+        console.log('Formatted indicators:', formattedIndicators);
 
         const { error } = await supabase.from('reports').insert({
           user_id: user.id,
