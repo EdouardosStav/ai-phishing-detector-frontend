@@ -39,13 +39,16 @@ const PhishingDetector = () => {
             formattedIndicators = analysisResult.indicators.map(indicator => 
               typeof indicator === 'string' ? indicator : String(indicator)
             );
-          } else if (typeof analysisResult.indicators === 'string') {
-            // If it's a string, try to parse it as JSON or split by common delimiters
-            try {
-              formattedIndicators = JSON.parse(analysisResult.indicators);
-            } catch {
-              // If JSON parsing fails, split by common delimiters
-              formattedIndicators = analysisResult.indicators.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+          } else {
+            // Handle case where indicators might be a string instead of array
+            const indicatorsValue = analysisResult.indicators as unknown;
+            if (typeof indicatorsValue === 'string') {
+              try {
+                formattedIndicators = JSON.parse(indicatorsValue);
+              } catch {
+                // If JSON parsing fails, split by common delimiters
+                formattedIndicators = indicatorsValue.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+              }
             }
           }
         }
