@@ -36,34 +36,39 @@ const PhishingDetector = () => {
         // Ensure indicators is properly formatted as an array of strings
         let formattedIndicators: string[] = [];
         
-        // Handle different possible formats from the backend
-        const indicatorsRaw = analysisResult.indicators as any;
-        
-        if (Array.isArray(indicatorsRaw)) {
-          // If it's already an array, ensure all elements are strings
-          formattedIndicators = indicatorsRaw.map(indicator => 
-            typeof indicator === 'string' ? indicator : String(indicator)
-          );
-        } else if (typeof indicatorsRaw === 'string') {
-          // If it's a string, try to parse it as JSON or split by delimiters
-          try {
-            const parsed = JSON.parse(indicatorsRaw);
-            if (Array.isArray(parsed)) {
-              formattedIndicators = parsed.map(item => String(item));
-            } else {
-              formattedIndicators = [String(parsed)];
+        if (analysisResult.indicators) {
+          if (Array.isArray(analysisResult.indicators)) {
+            // If it's already an array, ensure all elements are strings
+            formattedIndicators = analysisResult.indicators
+              .filter(indicator => indicator !== null && indicator !== undefined && indicator !== "")
+              .map(indicator => String(indicator).trim())
+              .filter(indicator => indicator.length > 0);
+          } else if (typeof analysisResult.indicators === 'string') {
+            // If it's a string, try to parse it or split it
+            try {
+              const parsed = JSON.parse(analysisResult.indicators);
+              if (Array.isArray(parsed)) {
+                formattedIndicators = parsed.map(item => String(item).trim()).filter(item => item.length > 0);
+              } else {
+                formattedIndicators = [String(parsed).trim()].filter(item => item.length > 0);
+              }
+            } catch {
+              // If JSON parsing fails, split by common delimiters
+              formattedIndicators = analysisResult.indicators
+                .split(/[,;|]/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
             }
-          } catch {
-            // If JSON parsing fails, split by common delimiters
-            formattedIndicators = indicatorsRaw.split(/[,;|]/).map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+          } else if (typeof analysisResult.indicators === 'object') {
+            // If it's an object, extract the values
+            const values = Object.values(analysisResult.indicators);
+            formattedIndicators = values
+              .filter(value => value !== null && value !== undefined)
+              .map(value => String(value).trim())
+              .filter(value => value.length > 0);
           }
-        } else if (indicatorsRaw && typeof indicatorsRaw === 'object') {
-          // If it's an object (like the backend response), extract the values
-          const values = Object.values(indicatorsRaw);
-          formattedIndicators = values.filter(value => value !== null && value !== undefined).map(value => String(value));
         }
 
-        console.log('Original indicators:', indicatorsRaw);
         console.log('Formatted indicators:', formattedIndicators);
 
         const reportData = {
@@ -78,17 +83,17 @@ const PhishingDetector = () => {
 
         console.log('Inserting report data:', reportData);
 
-        const { data, error } = await supabase.from('reports').insert(reportData);
+        const { data, error } = await supabase.from('reports').insert(reportData).select();
 
         if (error) {
-          console.error('Error saving report:', error);
-          toast({
-            title: 'Warning',
-            description: 'Analysis completed but failed to save to history',
-            variant: 'destructive',
-          });
+          console.error('Supabase error details:', error);
+          throw error;
         } else {
           console.log('Report saved successfully:', data);
+          toast({
+            title: 'Success',
+            description: 'Analysis saved to your reports history',
+          });
         }
       } catch (error) {
         console.error('Error saving report:', error);
