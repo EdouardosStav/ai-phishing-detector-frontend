@@ -30,6 +30,8 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
     setIsLoading(true);
     
     try {
+      console.log('Analyzing email content...');
+      
       const response = await fetch('http://127.0.0.1:5000/analyze-email', {
         method: 'POST',
         headers: {
@@ -56,11 +58,20 @@ const EmailAnalyzer = ({ onResult, isLoading, setIsLoading }: EmailAnalyzerProps
       });
     } catch (error) {
       console.error('Analysis error:', error);
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze email. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Failed",
+          description: "Cannot connect to the analysis server. Please ensure your Flask backend is running on http://127.0.0.1:5000",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Analysis Failed",
+          description: error instanceof Error ? error.message : "Failed to analyze email. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }

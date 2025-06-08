@@ -19,11 +19,23 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
 
   const isValidUrl = (urlString: string) => {
     try {
-      new URL(urlString);
-      return true;
+      const urlObj = new URL(urlString);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
     } catch {
       return false;
     }
+  };
+
+  const normalizeUrl = (urlString: string) => {
+    // Remove any leading/trailing whitespace
+    let cleanUrl = urlString.trim();
+    
+    // If it doesn't start with http:// or https://, add https://
+    if (!cleanUrl.match(/^https?:\/\//)) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+    
+    return cleanUrl;
   };
 
   const analyzeUrl = async () => {
@@ -36,10 +48,12 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       return;
     }
 
-    if (!isValidUrl(url)) {
+    const normalizedUrl = normalizeUrl(url);
+
+    if (!isValidUrl(normalizedUrl)) {
       toast({
         title: "Invalid URL",
-        description: "Please enter a valid URL (e.g., https://example.com)",
+        description: "Please enter a valid URL (e.g., example.com or https://example.com)",
         variant: "destructive",
       });
       return;
@@ -48,12 +62,14 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     setIsLoading(true);
     
     try {
+      console.log('Analyzing URL:', normalizedUrl);
+      
       const response = await fetch('http://127.0.0.1:5000/analyze-url', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: normalizedUrl }),
       });
 
       if (!response.ok) {
@@ -65,7 +81,7 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       onResult({
         ...data,
         type: 'url',
-        input: url,
+        input: normalizedUrl,
       });
 
       toast({
@@ -74,11 +90,20 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       });
     } catch (error) {
       console.error('Analysis error:', error);
-      toast({
-        title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze URL. Please try again.",
-        variant: "destructive",
-      });
+      
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        toast({
+          title: "Backend Connection Failed",
+          description: "Cannot connect to the analysis server. Please ensure your Flask backend is running on http://127.0.0.1:5000",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Analysis Failed",
+          description: error instanceof Error ? error.message : "Failed to analyze URL. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -90,6 +115,10 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     }
   };
 
+  const displayUrl = url || "";
+  const normalizedUrl = url ? normalizeUrl(url) : "";
+  const isUrlValid = !url || isValidUrl(normalizedUrl);
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -99,25 +128,30 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
         </Label>
         <Input
           id="url"
-          type="url"
-          placeholder="https://example.com"
-          value={url}
+          type="text"
+          placeholder="example.com or https://example.com"
+          value={displayUrl}
           onChange={(e) => setUrl(e.target.value)}
           onKeyPress={handleKeyPress}
           className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
           disabled={isLoading}
         />
-        {url && !isValidUrl(url) && (
+        {url && !isUrlValid && (
           <div className="flex items-center text-amber-400 text-sm">
             <AlertTriangle className="h-4 w-4 mr-1" />
-            Please enter a valid URL starting with http:// or https://
+            Please enter a valid URL
+          </div>
+        )}
+        {url && isUrlValid && normalizedUrl !== url && (
+          <div className="text-sm text-slate-400">
+            Will analyze: {normalizedUrl}
           </div>
         )}
       </div>
 
       <Button 
         onClick={analyzeUrl}
-        disabled={isLoading || !url.trim()}
+        disabled={isLoading || !url.trim() || !isUrlValid}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white"
       >
         {isLoading ? (
