@@ -10,14 +10,15 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface Report {
   id: string;
-  type: 'url' | 'email';
+  type: string;
   input_text: string;
   risk_score: number;
   risk_level: string;
-  explanation: string;
-  indicators: string[];
+  explanation: string | null;
+  indicators: string[] | null;
   pdf_url: string | null;
   created_at: string;
+  user_id: string;
 }
 
 const ReportsHistory = () => {
