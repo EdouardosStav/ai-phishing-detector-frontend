@@ -110,7 +110,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
 
   return (
     <Card className="bg-slate-800/50 border-slate-700">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <CardTitle className="text-white flex items-center">
           {getRiskIcon(result.risk_level)}
           <span className="ml-2">Analysis Results</span>
@@ -119,9 +119,9 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
           {result.type === 'url' ? 'URL' : 'Email'} security analysis completed
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {/* Risk Score */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-white font-medium">Risk Score</span>
             <div className="flex items-center space-x-2">
@@ -135,21 +135,21 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
           </div>
           <Progress 
             value={result.risk_score * 10} 
-            className="h-3"
+            className="h-2"
           />
         </div>
 
         {/* Triggered Indicators */}
         {result.indicators && result.indicators.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h3 className="text-white font-medium flex items-center">
               <AlertTriangle className="h-4 w-4 mr-2 text-yellow-400" />
               Triggered Indicators
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-1">
               {result.indicators.map((indicator, index) => (
-                <li key={index} className="flex items-start text-slate-300">
-                  <span className="text-yellow-400 mr-2">•</span>
+                <li key={index} className="flex items-start text-slate-300 text-sm">
+                  <span className="text-yellow-400 mr-2 mt-1">•</span>
                   {indicator}
                 </li>
               ))}
@@ -159,13 +159,13 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
 
         {/* AI Explanation */}
         {result.explanation && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             <h3 className="text-white font-medium flex items-center">
               <Shield className="h-4 w-4 mr-2 text-blue-400" />
               AI Analysis Summary
             </h3>
-            <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
-              <p className="text-slate-300 leading-relaxed">
+            <div className="bg-slate-700/50 rounded-lg p-3 border border-slate-600">
+              <p className="text-slate-300 leading-relaxed text-sm">
                 {result.explanation}
               </p>
             </div>
@@ -173,7 +173,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
         )}
 
         {/* Download Report */}
-        <div className="pt-4 border-t border-slate-600">
+        <div className="pt-2">
           <Button
             onClick={downloadReport}
             disabled={isDownloading}

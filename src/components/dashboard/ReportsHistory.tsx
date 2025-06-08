@@ -1,12 +1,19 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { History, Download, Globe, Mail, Calendar, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { History, Download, Globe, Mail, Calendar, AlertTriangle, CheckCircle, XCircle, Trash, MoreVertical } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import DeleteReportDialog from '../DeleteReportDialog';
+import ClearAllReportsDialog from '../ClearAllReportsDialog';
 
 interface Report {
   id: string;
@@ -24,6 +31,10 @@ interface Report {
 const ReportsHistory = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clearAllDialogOpen, setClearAllDialogOpen] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string>('');
+  const [selectedReportType, setSelectedReportType] = useState<string>('');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -38,6 +49,7 @@ const ReportsHistory = () => {
       const { data, error } = await supabase
         .from('reports')
         .select('*')
+        .eq('user_id', user?.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -53,6 +65,20 @@ const ReportsHistory = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteClick = (reportId: string, reportType: string) => {
+    setSelectedReportId(reportId);
+    setSelectedReportType(reportType);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteSuccess = () => {
+    fetchReports();
+  };
+
+  const handleClearAllSuccess = () => {
+    setReports([]);
   };
 
   const getRiskIcon = (level: string) => {
@@ -106,13 +132,27 @@ const ReportsHistory = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center">
-          <History className="h-8 w-8 mr-3 text-blue-400" />
-          Reports History
-        </h2>
+        <div className="flex items-center justify-center mb-4">
+          <h2 className="text-3xl font-bold text-white flex items-center">
+            <History className="h-8 w-8 mr-3 text-blue-400" />
+            Reports History
+          </h2>
+        </div>
         <p className="text-slate-300">
           View all your previous phishing analysis reports
         </p>
+        {reports.length > 0 && (
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setClearAllDialogOpen(true)}
+              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+            >
+              <Trash className="h-4 w-4 mr-2" />
+              Clear All Reports ({reports.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {reports.length === 0 ? (
@@ -144,9 +184,27 @@ const ReportsHistory = () => {
                       {report.risk_level.toUpperCase()}
                     </Badge>
                   </div>
-                  <div className="flex items-center text-slate-400 text-sm">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {formatDate(report.created_at)}
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center text-slate-400 text-sm">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {formatDate(report.created_at)}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-400 hover:text-white">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClick(report.id, report.type)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          Delete Report
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
                 <CardDescription className="text-slate-400">
@@ -209,6 +267,19 @@ const ReportsHistory = () => {
           ))}
         </div>
       )}
+      <DeleteReportDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        reportId={selectedReportId}
+        reportType={selectedReportType}
+        onDelete={handleDeleteSuccess}
+      />
+      <ClearAllReportsDialog
+        isOpen={clearAllDialogOpen}
+        onClose={() => setClearAllDialogOpen(false)}
+        onClearAll={handleClearAllSuccess}
+        totalReports={reports.length}
+      />
     </div>
   );
 };

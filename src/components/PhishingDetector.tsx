@@ -31,11 +31,13 @@ const PhishingDetector = () => {
     // Save report to database
     if (user) {
       try {
+        console.log('Saving analysis result to database:', analysisResult);
+        
         // Ensure indicators is properly formatted as an array of strings
         let formattedIndicators: string[] = [];
         
         // Handle different possible formats from the backend
-        const indicatorsRaw = analysisResult.indicators as any; // Use 'any' to bypass strict typing for backend data
+        const indicatorsRaw = analysisResult.indicators as any;
         
         if (Array.isArray(indicatorsRaw)) {
           // If it's already an array, ensure all elements are strings
@@ -64,7 +66,7 @@ const PhishingDetector = () => {
         console.log('Original indicators:', indicatorsRaw);
         console.log('Formatted indicators:', formattedIndicators);
 
-        const { error } = await supabase.from('reports').insert({
+        const reportData = {
           user_id: user.id,
           type: analysisResult.type,
           input_text: analysisResult.input,
@@ -72,7 +74,11 @@ const PhishingDetector = () => {
           risk_level: analysisResult.risk_level,
           explanation: analysisResult.explanation || '',
           indicators: formattedIndicators,
-        });
+        };
+
+        console.log('Inserting report data:', reportData);
+
+        const { data, error } = await supabase.from('reports').insert(reportData);
 
         if (error) {
           console.error('Error saving report:', error);
@@ -82,7 +88,7 @@ const PhishingDetector = () => {
             variant: 'destructive',
           });
         } else {
-          console.log('Report saved successfully');
+          console.log('Report saved successfully:', data);
         }
       } catch (error) {
         console.error('Error saving report:', error);
