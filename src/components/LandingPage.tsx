@@ -1,7 +1,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Zap, Lock, Eye, ArrowRight, CheckCircle } from 'lucide-react';
+import { Flag, Zap, Lock, Eye, ArrowRight, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -51,7 +51,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <Shield className="h-6 w-6 text-white" />
+              <Flag className="h-6 w-6 text-white" />
             </div>
             <span className="text-xl font-bold text-white">AI Phishing Detector</span>
           </div>
@@ -65,7 +65,7 @@ const LandingPage = () => {
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg"
                 >
-                  <Shield className="h-4 w-4 mr-2" />
+                  <Flag className="h-4 w-4 mr-2" />
                   Dashboard
                 </Button>
               </div>
@@ -115,7 +115,7 @@ const LandingPage = () => {
               size="lg"
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-10 py-4 text-lg rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/30 group border-0"
             >
-              <Shield className="h-6 w-6 mr-3 group-hover:animate-pulse" />
+              <Flag className="h-6 w-6 mr-3 group-hover:animate-pulse" />
               Start Security Analysis
               <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>

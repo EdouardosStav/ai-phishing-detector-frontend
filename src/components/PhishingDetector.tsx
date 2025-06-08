@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield, Globe, Mail } from "lucide-react";
+import { Flag, Globe, Mail } from "lucide-react";
 import UrlAnalyzer from "./UrlAnalyzer";
 import EmailAnalyzer from "./EmailAnalyzer";
 import ResultsPanel from "./ResultsPanel";
@@ -114,7 +114,7 @@ const PhishingDetector = () => {
       <div className="text-center mb-8">
         <div className="flex items-center justify-center mb-4">
           <div className="bg-blue-600 p-3 rounded-full mr-3">
-            <Shield className="h-8 w-8 text-white" />
+            <Flag className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-4xl font-bold text-white">
             AI Phishing Detector
@@ -131,7 +131,7 @@ const PhishingDetector = () => {
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center">
-              <Shield className="h-5 w-5 mr-2 text-blue-400" />
+              <Flag className="h-5 w-5 mr-2 text-blue-400" />
               Security Analysis
             </CardTitle>
             <CardDescription className="text-slate-400">

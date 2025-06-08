@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Shield } from 'lucide-react';
+import { LogOut, User, Flag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import PhishingDetector from '@/components/PhishingDetector';
@@ -37,7 +37,7 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className="bg-blue-600 p-2 rounded-lg">
-              <Shield className="h-6 w-6 text-white" />
+              <Flag className="h-6 w-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">AI Phishing Detector</h1>
