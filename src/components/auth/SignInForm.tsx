@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const SignInForm = () => {
   const [email, setEmail] = useState('');
@@ -13,6 +14,7 @@ const SignInForm = () => {
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +44,7 @@ const SignInForm = () => {
           title: 'Welcome back!',
           description: 'You have successfully signed in.',
         });
+        navigate('/dashboard');
       }
     } catch (error) {
       toast({
@@ -55,11 +58,11 @@ const SignInForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-white flex items-center">
+        <Label htmlFor="email" className="text-white flex items-center text-sm font-medium">
           <Mail className="h-4 w-4 mr-2 text-blue-400" />
-          Email
+          Email Address
         </Label>
         <Input
           id="email"
@@ -67,13 +70,13 @@ const SignInForm = () => {
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+          className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
           disabled={loading}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-white flex items-center">
+        <Label htmlFor="password" className="text-white flex items-center text-sm font-medium">
           <Lock className="h-4 w-4 mr-2 text-blue-400" />
           Password
         </Label>
@@ -83,7 +86,7 @@ const SignInForm = () => {
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+          className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200"
           disabled={loading}
         />
       </div>
@@ -91,7 +94,7 @@ const SignInForm = () => {
       <Button 
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 transition-all duration-200 hover:scale-[1.02] group"
       >
         {loading ? (
           <>
@@ -99,7 +102,10 @@ const SignInForm = () => {
             Signing In...
           </>
         ) : (
-          'Sign In'
+          <>
+            <LogIn className="mr-2 h-4 w-4 group-hover:animate-pulse" />
+            Sign In
+          </>
         )}
       </Button>
     </form>

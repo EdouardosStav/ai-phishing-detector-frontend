@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AuthPage from "@/components/auth/AuthPage";
 import Dashboard from "@/components/dashboard/Dashboard";
+import LandingPage from "@/components/LandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,8 +26,9 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={!user ? <AuthPage /> : <Dashboard />} />
-        <Route path="/" element={user ? <Dashboard /> : <AuthPage />} />
+        <Route path="/dashboard" element={user ? <Dashboard /> : <AuthPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
