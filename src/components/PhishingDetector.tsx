@@ -6,6 +6,9 @@ import { Shield, Globe, Mail } from "lucide-react";
 import UrlAnalyzer from "./UrlAnalyzer";
 import EmailAnalyzer from "./EmailAnalyzer";
 import ResultsPanel from "./ResultsPanel";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export interface AnalysisResult {
   risk_score: number;
@@ -19,6 +22,38 @@ export interface AnalysisResult {
 const PhishingDetector = () => {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleResult = async (analysisResult: AnalysisResult) => {
+    setResult(analysisResult);
+    
+    // Save report to database
+    if (user) {
+      try {
+        const { error } = await supabase.from('reports').insert({
+          user_id: user.id,
+          type: analysisResult.type,
+          input_text: analysisResult.input,
+          risk_score: analysisResult.risk_score,
+          risk_level: analysisResult.risk_level,
+          explanation: analysisResult.explanation,
+          indicators: analysisResult.indicators,
+        });
+
+        if (error) {
+          console.error('Error saving report:', error);
+          toast({
+            title: 'Warning',
+            description: 'Analysis completed but failed to save to history',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Error saving report:', error);
+      }
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -71,7 +106,7 @@ const PhishingDetector = () => {
 
               <TabsContent value="url" className="mt-6">
                 <UrlAnalyzer 
-                  onResult={setResult} 
+                  onResult={handleResult} 
                   isLoading={isLoading}
                   setIsLoading={setIsLoading}
                 />
@@ -79,7 +114,7 @@ const PhishingDetector = () => {
 
               <TabsContent value="email" className="mt-6">
                 <EmailAnalyzer 
-                  onResult={setResult} 
+                  onResult={handleResult} 
                   isLoading={isLoading}
                   setIsLoading={setIsLoading}
                 />
