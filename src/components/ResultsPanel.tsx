@@ -59,7 +59,8 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
     setIsDownloading(true);
     
     try {
-      const endpoint = result.type === 'email' ? '/generate-email-report' : '/generate-url-report';
+      // Use the correct endpoints from your Flask backend
+      const endpoint = result.type === 'email' ? '/generate-email-report' : '/generate-report';
       const requestBody = result.type === 'email' 
         ? { email: result.input }
         : { url: result.input };
