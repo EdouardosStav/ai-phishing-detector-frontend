@@ -119,16 +119,6 @@ const LandingPage = () => {
               Start Security Analysis
               <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
             </Button>
-            {!user && (
-              <div className="text-center sm:text-left">
-                <p className="text-sm text-slate-400 mb-1">
-                  Free analysis • No credit card required
-                </p>
-                <p className="text-xs text-slate-500">
-                  Join 10,000+ users protecting themselves online
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Features Grid */}
