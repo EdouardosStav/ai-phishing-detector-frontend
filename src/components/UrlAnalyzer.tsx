@@ -48,7 +48,7 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     setIsLoading(true);
     
     try {
-      const response = await fetch('http://localhost:5000/analyze-url', {
+      const response = await fetch('http://127.0.0.1:5000/analyze-url', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

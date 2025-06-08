@@ -64,7 +64,7 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
         ? { url: result.input }
         : { email: result.input };
 
-      const response = await fetch(`http://localhost:5000${endpoint}`, {
+      const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,15 +77,14 @@ const ResultsPanel = ({ result }: ResultsPanelProps) => {
       }
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = `phishing-analysis-report-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `report_${result.type}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
 
       toast({
         title: "Report Downloaded",
