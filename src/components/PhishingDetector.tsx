@@ -37,16 +37,18 @@ const PhishingDetector = () => {
         let formattedIndicators: string[] = [];
         
         if (analysisResult.indicators) {
-          if (Array.isArray(analysisResult.indicators)) {
+          const indicators = analysisResult.indicators as any; // Cast to any to avoid type narrowing issues
+          
+          if (Array.isArray(indicators)) {
             // If it's already an array, ensure all elements are strings
-            formattedIndicators = analysisResult.indicators
+            formattedIndicators = indicators
               .filter(indicator => indicator !== null && indicator !== undefined && indicator !== "")
               .map(indicator => String(indicator).trim())
               .filter(indicator => indicator.length > 0);
-          } else if (typeof analysisResult.indicators === 'string') {
+          } else if (typeof indicators === 'string') {
             // If it's a string, try to parse it or split it
             try {
-              const parsed = JSON.parse(analysisResult.indicators);
+              const parsed = JSON.parse(indicators);
               if (Array.isArray(parsed)) {
                 formattedIndicators = parsed.map(item => String(item).trim()).filter(item => item.length > 0);
               } else {
@@ -54,14 +56,14 @@ const PhishingDetector = () => {
               }
             } catch {
               // If JSON parsing fails, split by common delimiters
-              formattedIndicators = analysisResult.indicators
+              formattedIndicators = indicators
                 .split(/[,;|]/)
                 .map(s => s.trim())
                 .filter(s => s.length > 0);
             }
-          } else if (typeof analysisResult.indicators === 'object') {
+          } else if (typeof indicators === 'object') {
             // If it's an object, extract the values
-            const values = Object.values(analysisResult.indicators);
+            const values = Object.values(indicators);
             formattedIndicators = values
               .filter(value => value !== null && value !== undefined)
               .map(value => String(value).trim())
