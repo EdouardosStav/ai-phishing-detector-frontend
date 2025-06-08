@@ -52,8 +52,13 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
         body: JSON.stringify({ url }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+
       if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Response error:', errorText);
+        throw new Error(`Analysis failed: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -72,9 +77,18 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
     } catch (error) {
       console.error('Analysis error:', error);
       
+      // More specific error handling
+      let errorMessage = "Failed to analyze URL. Please ensure the Flask backend is running on port 5000.";
+      
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        errorMessage = "Cannot connect to Flask backend. Please ensure it's running at http://127.0.0.1:5000";
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Analysis Failed",
-        description: error instanceof Error ? error.message : "Failed to analyze URL. Please ensure the backend is running.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
