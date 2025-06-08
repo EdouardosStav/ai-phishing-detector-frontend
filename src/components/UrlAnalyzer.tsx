@@ -80,9 +80,11 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
         });
       }
       
+      // Normalize risk level to lowercase to match database constraint
+      const normalizedRiskLevel = data.risk_level.toLowerCase();
+      
       // Create a better explanation
-      const riskLevelText = data.risk_level.toLowerCase();
-      let explanation = `This URL has been analyzed and shows ${riskLevelText} risk indicators with a score of ${data.score}/10.`;
+      let explanation = `This URL has been analyzed and shows ${normalizedRiskLevel} risk indicators with a score of ${data.score}/10.`;
       
       if (meaningfulIndicators.length > 0) {
         explanation += ` The following security concerns were identified: ${meaningfulIndicators.join(', ')}.`;
@@ -93,7 +95,7 @@ const UrlAnalyzer = ({ onResult, isLoading, setIsLoading }: UrlAnalyzerProps) =>
       // Map Flask backend response to frontend expected format
       onResult({
         risk_score: data.score,
-        risk_level: data.risk_level,
+        risk_level: normalizedRiskLevel, // Use normalized lowercase value
         indicators: meaningfulIndicators,
         explanation: explanation,
         type: 'url',
