@@ -31,14 +31,35 @@ const PhishingDetector = () => {
     // Save report to database
     if (user) {
       try {
+        // Ensure indicators is properly formatted as an array of strings
+        let formattedIndicators: string[] = [];
+        
+        if (analysisResult.indicators) {
+          if (Array.isArray(analysisResult.indicators)) {
+            formattedIndicators = analysisResult.indicators.map(indicator => 
+              typeof indicator === 'string' ? indicator : String(indicator)
+            );
+          } else if (typeof analysisResult.indicators === 'string') {
+            // If it's a string, try to parse it as JSON or split by common delimiters
+            try {
+              formattedIndicators = JSON.parse(analysisResult.indicators);
+            } catch {
+              // If JSON parsing fails, split by common delimiters
+              formattedIndicators = analysisResult.indicators.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+            }
+          }
+        }
+
+        console.log('Saving report with formatted indicators:', formattedIndicators);
+
         const { error } = await supabase.from('reports').insert({
           user_id: user.id,
           type: analysisResult.type,
           input_text: analysisResult.input,
           risk_score: analysisResult.risk_score,
           risk_level: analysisResult.risk_level,
-          explanation: analysisResult.explanation,
-          indicators: analysisResult.indicators,
+          explanation: analysisResult.explanation || '',
+          indicators: formattedIndicators,
         });
 
         if (error) {
@@ -48,9 +69,16 @@ const PhishingDetector = () => {
             description: 'Analysis completed but failed to save to history',
             variant: 'destructive',
           });
+        } else {
+          console.log('Report saved successfully');
         }
       } catch (error) {
         console.error('Error saving report:', error);
+        toast({
+          title: 'Warning',
+          description: 'Analysis completed but failed to save to history',
+          variant: 'destructive',
+        });
       }
     }
   };
